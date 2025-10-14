@@ -35,6 +35,11 @@ defmodule Savvy.Handler do
     Savvy.Api.BearController.index(conv)
   end
 
+  def route(%Conv{ method: "POST", path: "/api/bears" } = conv) do
+    Savvy.Api.BearController.create(conv, conv.params)
+  end
+
+
   def route(%Conv{ method: "GET", path: "/bears" } = conv) do
     BearController.index(conv)
   end

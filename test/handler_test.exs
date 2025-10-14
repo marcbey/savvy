@@ -172,6 +172,29 @@ defmodule HandlerTest do
            """
   end
 
+  test "POST /api/bears" do
+    request = """
+    POST /api/bears HTTP/1.1\r
+    Host: example.com\r
+    User-Agent: ExampleBrowser/1.0\r
+    Accept: */*\r
+    Content-Type: application/x-www-form-urlencoded\r
+    Content-Length: 21\r
+    \r
+    name=Baloo&type=Brown
+    """
+
+    response = handle(request)
+
+    assert response == """
+           HTTP/1.1 201 Created\r
+           Content-Type: application/json\r
+           Content-Length: 33\r
+           \r
+           Created a Brown bear named Baloo!
+           """
+  end
+
   test "GET /api/bears" do
     request = """
     GET /api/bears HTTP/1.1\r
