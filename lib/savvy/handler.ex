@@ -4,6 +4,7 @@ defmodule Savvy.Handler do
 
   alias Savvy.Conv
   alias Savvy.BearController
+  alias Savvy.PagesController
 
   @pages_path Path.expand("../../pages", __DIR__)
 
@@ -58,6 +59,10 @@ defmodule Savvy.Handler do
       |> Path.join("about.html")
       |> File.read
       |> handle_file(conv)
+  end
+
+  def route(%Conv{ method: "GET", path: "/pages/faq " } = conv) do
+    PagesController.faq(conv)
   end
 
   def route(%Conv{ path: path } = conv) do
