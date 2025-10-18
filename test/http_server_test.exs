@@ -6,23 +6,26 @@ defmodule HttpServerTest do
   import Savvy.Handler, only: [handle: 1]
 
   test "GET /wildthings" do
-    request = """
-    GET /wildthings HTTP/1.1\r
-    Host: example.com\r
-    User-Agent: ExampleBrowser/1.0\r
-    Accept: */*\r
-    \r
-    """
-
+    parent = self()
     spawn(fn -> HttpServer.start(1024) end)
-    response = HttpClient.get(request, 1024)
 
-    assert response == {:ok, """
-           HTTP/1.1 200 OK\r
-           Content-Type: text/html\r
-           Content-Length: 20\r
-           \r
-           Bears, Lions, Tigers
-           """}
+    url = "http://localhost:1024/wildthings"
+    max_concurrent_requests = 5
+
+    [1..max_concurrent_requests] |> Enum.each(fn _ ->
+      spawn(fn ->
+        {:ok, response} = HTTPoison.get(url)
+        send(parent, {:ok, response})
+      end)
+    end)
+
+    responses = [1..max_concurrent_requests] |> Enum.map(fn _ ->
+      receive do
+        {:ok, response} -> response
+      end
+    end)
+
+    assert Enum.all?(responses, fn response -> response.status_code == 200 end)
+    assert Enum.all?(responses, fn response -> response.body == "Bears, Lions, Tigers" end)
   end
 end

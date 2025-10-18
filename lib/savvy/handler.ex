@@ -5,6 +5,7 @@ defmodule Savvy.Handler do
   alias Savvy.Conv
   alias Savvy.BearController
   alias Savvy.PagesController
+  alias Savvy.VideoCam
 
   @pages_path Path.expand("../../pages", __DIR__)
 
@@ -40,7 +41,6 @@ defmodule Savvy.Handler do
     Savvy.Api.BearController.create(conv, conv.params)
   end
 
-
   def route(%Conv{ method: "GET", path: "/bears" } = conv) do
     BearController.index(conv)
   end
@@ -67,6 +67,16 @@ defmodule Savvy.Handler do
 
   def route(%Conv{ path: path } = conv) do
     %{ conv | status: 404, resp_body: "No #{path} here!"}
+  end
+
+  def route(%Conv{ method: "GET", path: "/snapshots" } = conv) do
+    snapshot1 = VideoCam.get_snapshot("cam-1")
+    snapshot2 = VideoCam.get_snapshot("cam-2")
+    snapshot3 = VideoCam.get_snapshot("cam-3")
+
+    snapshots = [snapshot1, snapshot2, snapshot3]
+
+    %{ conv | status: 200, resp_body: inspect snapshots}
   end
 
   def handle_file({:ok, content}, conv) do
