@@ -1,4 +1,4 @@
-defmodule Savvy.BearController do
+defmodule Savvy.PagesController do
 
   alias Savvy.Wildthings
   alias Savvy.Bear
@@ -10,7 +10,7 @@ defmodule Savvy.BearController do
       Wildthings.list_bears()
       |> Enum.sort(&Bear.order_asc_by_name/2)
 
-    render(conv, "faq.md", bindings)
+    render(conv, "faq.md", bears)
   end
 
   defp render(conv, template, bindings) do
