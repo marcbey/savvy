@@ -12,20 +12,25 @@ defmodule HttpServerTest do
     url = "http://localhost:1024/wildthings"
     max_concurrent_requests = 5
 
-    [1..max_concurrent_requests] |> Enum.each(fn _ ->
+    for _ <- 1..max_concurrent_requests do
       spawn(fn ->
         {:ok, response} = HTTPoison.get(url)
         send(parent, {:ok, response})
       end)
-    end)
+    end
 
-    responses = [1..max_concurrent_requests] |> Enum.map(fn _ ->
+    for _ <- 1..max_concurrent_requests do
       receive do
         {:ok, response} -> response
       end
-    end)
+    end
 
-    assert Enum.all?(responses, fn response -> response.status_code == 200 end)
-    assert Enum.all?(responses, fn response -> response.body == "Bears, Lions, Tigers" end)
+    for _ <- 1..max_concurrent_requests do
+      receive do
+        {:ok, response} ->
+          assert response.status_code == 200
+          assert response.body == "Bears, Lions, Tigers"
+      end
+    end
   end
 end
