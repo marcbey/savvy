@@ -24,7 +24,7 @@ defmodule Savvy.BearController do
               resp_body: "Created a #{type} bear named #{name}!" }
   end
 
-  defp render(conv, template, bindings) do
+  defp render(conv, template, bindings \\ []) do
     content =
       @templates_path
       |> Path.join(template)

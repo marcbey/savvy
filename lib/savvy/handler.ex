@@ -1,10 +1,8 @@
 defmodule Savvy.Handler do
-
   @moduledoc "Handles HTTP requests."
 
   alias Savvy.Conv
   alias Savvy.BearController
-  alias Savvy.PagesController
   alias Savvy.VideoCam
 
   @pages_path Path.expand("../../pages", __DIR__)
@@ -20,32 +18,53 @@ defmodule Savvy.Handler do
     |> log
     |> route
     |> track
-    |> put_content_length
     |> format_response
   end
 
-  def put_content_length(conv) do
-    headers = Map.put(conv.resp_headers, "Content-Length", String.length(conv.resp_body))
-    %{ conv | resp_headers: headers }
+  def route(%Conv{method: "GET", path: "/sensors"} = conv) do
+    task = Task.async(fn -> Savvy.Tracker.get_location("bigfoot") end)
+
+    snapshots =
+      ["cam-1", "cam-2", "cam-3"]
+      |> Enum.map(&Task.async(fn -> VideoCam.get_snapshot(&1) end))
+      |> Enum.map(&Task.await/1)
+
+    where_is_bigfoot = Task.await(task)
+
+    %{conv | status: 200, resp_body: inspect({snapshots, where_is_bigfoot})}
   end
 
-  def route(%Conv{ method: "GET", path: "/wildthings" } = conv) do
-    %{ conv | status: 200, resp_body: "Bears, Lions, Tigers" }
+  def route(%Conv{method: "GET", path: "/kaboom"}) do
+    raise "Kaboom!"
   end
 
-  def route(%Conv{ method: "GET", path: "/api/bears" } = conv) do
+  def route(%Conv{method: "GET", path: "/hibernate/" <> time} = conv) do
+    time |> String.to_integer() |> :timer.sleep()
+
+    %{conv | status: 200, resp_body: "Awake!"}
+  end
+
+  def route(%Conv{method: "POST", path: "/pledges"} = conv) do
+    Servy.PledgeController.create(conv, conv.params)
+  end
+
+  def route(%Conv{method: "GET", path: "/pledges"} = conv) do
+    Servy.PledgeController.index(conv)
+  end
+
+  def route(%Conv{method: "GET", path: "/wildthings"} = conv) do
+    %{conv | status: 200, resp_body: "Bears, Lions, Tigers"}
+  end
+
+  def route(%Conv{method: "GET", path: "/api/bears"} = conv) do
     Savvy.Api.BearController.index(conv)
   end
 
-  def route(%Conv{ method: "POST", path: "/api/bears" } = conv) do
-    Savvy.Api.BearController.create(conv, conv.params)
-  end
-
-  def route(%Conv{ method: "GET", path: "/bears" } = conv) do
+  def route(%Conv{method: "GET", path: "/bears"} = conv) do
     BearController.index(conv)
   end
 
-  def route(%Conv{ method: "GET", path: "/bears/" <> id } = conv) do
+  def route(%Conv{method: "GET", path: "/bears/" <> id} = conv) do
     params = Map.put(conv.params, "id", id)
     BearController.show(conv, params)
   end
@@ -55,59 +74,35 @@ defmodule Savvy.Handler do
   end
 
   def route(%Conv{method: "GET", path: "/about"} = conv) do
-      @pages_path
-      |> Path.join("about.html")
-      |> File.read
-      |> handle_file(conv)
+    @pages_path
+    |> Path.join("about.html")
+    |> File.read()
+    |> handle_file(conv)
   end
 
-  def route(%Conv{ method: "GET", path: "/pages/faq " } = conv) do
-    PagesController.faq(conv)
-  end
-
-  def route(%Conv{ path: path } = conv) do
-    %{ conv | status: 404, resp_body: "No #{path} here!"}
-  end
-
-  def route(%Conv{ method: "GET", path: "/snapshots" } = conv) do
-    snapshot1 = VideoCam.get_snapshot("cam-1")
-    snapshot2 = VideoCam.get_snapshot("cam-2")
-    snapshot3 = VideoCam.get_snapshot("cam-3")
-
-    snapshots = [snapshot1, snapshot2, snapshot3]
-
-    %{ conv | status: 200, resp_body: inspect snapshots}
+  def route(%Conv{path: path} = conv) do
+    %{conv | status: 404, resp_body: "No #{path} here!"}
   end
 
   def handle_file({:ok, content}, conv) do
-    %{ conv | status: 200, resp_body: content }
+    %{conv | status: 200, resp_body: content}
   end
 
   def handle_file({:error, :enoent}, conv) do
-    %{ conv | status: 404, resp_body: "File not found!" }
+    %{conv | status: 404, resp_body: "File not found!"}
   end
 
   def handle_file({:error, reason}, conv) do
-    %{ conv | status: 500, resp_body: "File error: #{reason}" }
+    %{conv | status: 500, resp_body: "File error: #{reason}"}
   end
 
   def format_response(%Conv{} = conv) do
     """
     HTTP/1.1 #{Conv.full_status(conv)}\r
-    #{format_response_headers(conv)}
+    Content-Type: #{conv.resp_content_type}\r
+    Content-Length: #{String.length(conv.resp_body)}\r
     \r
     #{conv.resp_body}
     """
   end
-
-  defp format_response_headers(conv) do
-    for {key, value} <- conv.resp_headers do
-      "#{key}: #{value}"
-    end
-    # |> Enum.sort
-    |> Enum.reverse
-    |> Enum.join("\r\n")
-    |> Kernel.<>("\r")
-  end
-
 end

@@ -3,7 +3,7 @@ defmodule Savvy.Conv do
             path: "",
             params: %{},
             headers: %{},
-            resp_headers: %{"Content-Type" => "text/html", "Content-Length" => 0},
+            resp_content_type: "text/html",
             resp_body: "",
             status: nil
 
