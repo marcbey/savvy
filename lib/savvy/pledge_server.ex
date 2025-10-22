@@ -20,20 +20,6 @@ defmodule Savvy.PledgeServer do
 
   # Client Interface
 
-  # def start do
-  #   IO.puts("Starting the pledge server...")
-  #   pid = spawn(__MODULE__, :listen_loop, [[]])
-
-  #   case Process.register(pid, @name) do
-  #     true ->
-  #       pid
-
-  #     {:error, :already_registered} ->
-  #       # If already registered, return the existing pid
-  #       Process.whereis(@name)
-  #   end
-  # end
-
   def create_pledge(name, amount) do
     send(@name, {self(), :create_pledge, name, amount})
 
