@@ -45,11 +45,11 @@ defmodule Savvy.Handler do
   end
 
   def route(%Conv{method: "POST", path: "/pledges"} = conv) do
-    Servy.PledgeController.create(conv, conv.params)
+    Savvy.PledgeController.create(conv, conv.params)
   end
 
   def route(%Conv{method: "GET", path: "/pledges"} = conv) do
-    Servy.PledgeController.index(conv)
+    Savvy.PledgeController.index(conv)
   end
 
   def route(%Conv{method: "GET", path: "/wildthings"} = conv) do
