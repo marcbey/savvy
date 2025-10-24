@@ -52,6 +52,10 @@ defmodule Savvy.Handler do
     Savvy.PledgeController.index(conv)
   end
 
+  def route(%Conv{method: "GET", path: "/pledges/total"} = conv) do
+    Savvy.PledgeController.total(conv)
+  end
+
   def route(%Conv{method: "GET", path: "/wildthings"} = conv) do
     %{conv | status: 200, resp_body: "Bears, Lions, Tigers"}
   end

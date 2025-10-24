@@ -8,8 +8,16 @@ defmodule Savvy.PledgeController do
 
   def index(conv) do
     # Gets the recent pledges from the cache
-    pledges = Savvy.PledgeServer.recent_pledges()
+    pledges = Savvy.PledgeServer.recent_pledges
 
     %{ conv | status: 200, resp_body: (inspect pledges) }
   end
+
+  def total(conv) do
+    # Gets the recent pledges from the cache
+    pledges = Savvy.PledgeServer.total_pledged
+
+    %{ conv | status: 200, resp_body: (inspect pledges) }
+  end
+
 end
