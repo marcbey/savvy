@@ -6,13 +6,6 @@ defmodule Savvy.PledgeServer do
     defstruct cache_size: 3, pledges: []
   end
 
-  def start_link(_opts) do
-    IO.puts("Starting the pledge server...")
-    pid = spawn(__MODULE__, :listen_loop, [[]])
-    Process.register(pid, @name)
-    {:ok, pid}
-  end
-
   # Client Interface
 
   def start do
