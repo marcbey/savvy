@@ -1,4 +1,5 @@
 defmodule Savvy.PledgeController do
+
   def create(conv, %{"name" => name, "amount" => amount}) do
     # Sends the pledge to the external service and caches it
     Savvy.PledgeServer.create_pledge(name, String.to_integer(amount))
@@ -8,14 +9,7 @@ defmodule Savvy.PledgeController do
 
   def index(conv) do
     # Gets the recent pledges from the cache
-    pledges = Savvy.PledgeServer.recent_pledges
-
-    %{ conv | status: 200, resp_body: (inspect pledges) }
-  end
-
-  def total(conv) do
-    # Gets the recent pledges from the cache
-    pledges = Savvy.PledgeServer.total_pledged
+    pledges = Savvy.PledgeServer.recent_pledges()
 
     %{ conv | status: 200, resp_body: (inspect pledges) }
   end

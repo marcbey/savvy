@@ -1,9 +1,9 @@
 defmodule Savvy.Handler do
+
   @moduledoc "Handles HTTP requests."
 
   alias Savvy.Conv
   alias Savvy.BearController
-  alias Savvy.VideoCam
 
   @pages_path Path.expand("../../pages", __DIR__)
 
@@ -21,29 +21,6 @@ defmodule Savvy.Handler do
     |> format_response
   end
 
-  def route(%Conv{method: "GET", path: "/sensors"} = conv) do
-    task = Task.async(fn -> Savvy.Tracker.get_location("bigfoot") end)
-
-    snapshots =
-      ["cam-1", "cam-2", "cam-3"]
-      |> Enum.map(&Task.async(fn -> VideoCam.get_snapshot(&1) end))
-      |> Enum.map(&Task.await/1)
-
-    where_is_bigfoot = Task.await(task)
-
-    %{conv | status: 200, resp_body: inspect({snapshots, where_is_bigfoot})}
-  end
-
-  def route(%Conv{method: "GET", path: "/kaboom"}) do
-    raise "Kaboom!"
-  end
-
-  def route(%Conv{method: "GET", path: "/hibernate/" <> time} = conv) do
-    time |> String.to_integer() |> :timer.sleep()
-
-    %{conv | status: 200, resp_body: "Awake!"}
-  end
-
   def route(%Conv{method: "POST", path: "/pledges"} = conv) do
     Savvy.PledgeController.create(conv, conv.params)
   end
@@ -52,23 +29,35 @@ defmodule Savvy.Handler do
     Savvy.PledgeController.index(conv)
   end
 
-  def route(%Conv{method: "GET", path: "/pledges/total"} = conv) do
-    Savvy.PledgeController.total(conv)
+  def route(%Conv{ method: "GET", path: "/sensors" } = conv) do
+    sensor_data = Savvy.SensorServer.get_sensor_data()
+
+    %{ conv | status: 200, resp_body: inspect sensor_data }
   end
 
-  def route(%Conv{method: "GET", path: "/wildthings"} = conv) do
-    %{conv | status: 200, resp_body: "Bears, Lions, Tigers"}
+  def route(%Conv{ method: "GET", path: "/kaboom" }) do
+    raise "Kaboom!"
   end
 
-  def route(%Conv{method: "GET", path: "/api/bears"} = conv) do
+  def route(%Conv{ method: "GET", path: "/hibernate/" <> time } = conv) do
+    time |> String.to_integer |> :timer.sleep
+
+    %{ conv | status: 200, resp_body: "Awake!" }
+  end
+
+  def route(%Conv{ method: "GET", path: "/wildthings" } = conv) do
+    %{ conv | status: 200, resp_body: "Bears, Lions, Tigers" }
+  end
+
+  def route(%Conv{ method: "GET", path: "/api/bears" } = conv) do
     Savvy.Api.BearController.index(conv)
   end
 
-  def route(%Conv{method: "GET", path: "/bears"} = conv) do
+  def route(%Conv{ method: "GET", path: "/bears" } = conv) do
     BearController.index(conv)
   end
 
-  def route(%Conv{method: "GET", path: "/bears/" <> id} = conv) do
+  def route(%Conv{ method: "GET", path: "/bears/" <> id } = conv) do
     params = Map.put(conv.params, "id", id)
     BearController.show(conv, params)
   end
@@ -78,26 +67,26 @@ defmodule Savvy.Handler do
   end
 
   def route(%Conv{method: "GET", path: "/about"} = conv) do
-    @pages_path
-    |> Path.join("about.html")
-    |> File.read()
-    |> handle_file(conv)
+      @pages_path
+      |> Path.join("about.html")
+      |> File.read
+      |> handle_file(conv)
   end
 
-  def route(%Conv{path: path} = conv) do
-    %{conv | status: 404, resp_body: "No #{path} here!"}
+  def route(%Conv{ path: path } = conv) do
+    %{ conv | status: 404, resp_body: "No #{path} here!"}
   end
 
   def handle_file({:ok, content}, conv) do
-    %{conv | status: 200, resp_body: content}
+    %{ conv | status: 200, resp_body: content }
   end
 
   def handle_file({:error, :enoent}, conv) do
-    %{conv | status: 404, resp_body: "File not found!"}
+    %{ conv | status: 404, resp_body: "File not found!" }
   end
 
   def handle_file({:error, reason}, conv) do
-    %{conv | status: 500, resp_body: "File error: #{reason}"}
+    %{ conv | status: 500, resp_body: "File error: #{reason}" }
   end
 
   def format_response(%Conv{} = conv) do
@@ -109,4 +98,5 @@ defmodule Savvy.Handler do
     #{conv.resp_body}
     """
   end
+
 end
