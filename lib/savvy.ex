@@ -1,7 +1,8 @@
 defmodule Savvy do
-  def hello(name) do
-    "Howdy, #{name}!"
+  use Application
+
+  def start(_type, _args) do
+    IO.puts "Starting the application..."
+    Savvy.Supervisor.start_link()
   end
 end
-
-# IO.puts Savvy.hello("Elixir")
